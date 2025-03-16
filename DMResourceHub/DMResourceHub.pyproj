@@ -24,14 +24,38 @@
     <Compile Include="assets\__init__.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="config\settings.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="config\__init__.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="main.py" />
+    <Compile Include="models\campaign.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="models\player.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="models\resource.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="models\__init__.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="services\discord_service.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="services\firebase_service.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="services\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="ui\main_window.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="ui\resource_upload_dialog.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="ui\__init__.py">
@@ -42,8 +66,10 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <Content Include=".env.template" />
     <Content Include=".gitignore" />
     <Content Include="README.md" />
+    <Content Include="requirements.txt" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="config\" />
