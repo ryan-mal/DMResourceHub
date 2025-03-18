@@ -36,6 +36,16 @@ class Resource:
             "times_shared": 0
         }
         
+        # Add this new field for Cloudinary data
+        self.cloudinary_data = {
+            "public_id": "",
+            "url": "",
+            "secure_url": "",
+            "resource_type": "",
+            "format": "",
+            "version": ""
+        }
+        
         # Type-specific data
         self.file_data = {}  # For images and PDFs
         self.link_data = {}  # For links
@@ -58,6 +68,8 @@ class Resource:
         # Add type-specific data
         if self.resource_type in ["image", "pdf"]:
             resource_dict["fileData"] = self.file_data
+            # Add Cloudinary data
+            resource_dict["cloudinaryData"] = self.cloudinary_data
         elif self.resource_type == "link":
             resource_dict["linkData"] = self.link_data
         elif self.resource_type == "text":
@@ -67,15 +79,7 @@ class Resource:
     
     @classmethod
     def from_dict(cls, id, data):
-        """Create a resource object from a dictionary
-        
-        Args:
-            id (str): Resource ID
-            data (dict): Resource data from Firebase
-            
-        Returns:
-            Resource: A new Resource object
-        """
+        """Create a resource object from a dictionary"""
         resource = cls(
             id=id,
             title=data.get("title", ""),
@@ -87,17 +91,23 @@ class Resource:
             uploaded_by=data.get("uploadedBy", ""),
             uploaded_at=data.get("uploadedAt")
         )
-        
+    
         # Set sharing status
         if "sharingStatus" in data:
             resource.sharing_status = data["sharingStatus"]
-            
+        
         # Set type-specific data
         if "fileData" in data:
             resource.file_data = data["fileData"]
+        # Get Cloudinary data
+        if "cloudinaryData" in data:
+            resource.cloudinary_data = data["cloudinaryData"]
         if "linkData" in data:
             resource.link_data = data["linkData"]
         if "textData" in data:
             resource.text_data = data["textData"]
-            
+        
         return resource
+
+
+
