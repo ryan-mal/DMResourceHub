@@ -192,37 +192,87 @@ class DiscordService:
             print(f"Error sending Discord message: {e}")
             return False
     
-        async def _send_message_async(self, channel_id, content, resource=None, file_path=None):
-            """Async method to send a message with optional resource or file"""
-            try:
-                # Get the channel
-                channel = self.client.get_channel(int(channel_id))
-                if not channel:
-                    print(f"Channel {channel_id} not found")
-                    return False
-        
-                message_content = content
-        
-                # If we have a resource with Cloudinary URL, add it to the message
-                if resource and resource.cloudinary_data.get("secure_url"):
-                    message_content += f"\n{resource.cloudinary_data['secure_url']}"
-            
-                    # Send message with URL
-                    await channel.send(content=message_content)
-                    return True
-        
-                # If we have a file path instead, send as attachment
-                elif file_path and Path(file_path).exists():
-                    await channel.send(content=content, file=File(file_path))
-                    return True
-                else:
-                    # Just send the text message
-                    await channel.send(content=content)
-                    return True
-            
-            except Exception as e:
-                print(f"Error in _send_message_async: {e}")
+    async def _send_message_async(self, channel_id, content, file_path=None):
+        """Async method to send a message"""
+        try:
+            # Get the channel
+            channel = self.client.get_channel(int(channel_id))
+            if not channel:
+                print(f"Channel {channel_id} not found")
                 return False
+            
+            # Send message with or without file
+            if file_path and Path(file_path).exists():
+                await channel.send(content=content, file=File(file_path))
+            else:
+                await channel.send(content=content)
+            
+            return True
+            
+        except Exception as e:
+            print(f"Error in _send_message_async: {e}")
+            return False
+    
+    def send_resource(self, channel_id, content, resource=None, file_path=None):
+        """Send a resource to a Discord channel
+        
+        Args:
+            channel_id (str): Discord channel ID
+            content (str): Message content
+            resource (Resource, optional): Resource object with Cloudinary data. Defaults to None.
+            file_path (str, optional): Path to file to attach. Defaults to None.
+            
+        Returns:
+            bool: True if successful, False otherwise
+        """
+        if not self.connected:
+            print("Not connected to Discord")
+            return False
+        
+        try:
+            # Create a future to hold the result
+            future = asyncio.run_coroutine_threadsafe(
+                self._send_resource_async(channel_id, content, resource, file_path), 
+                self.loop
+            )
+            # Wait for the result with a timeout
+            return future.result(timeout=10.0)
+            
+        except Exception as e:
+            print(f"Error sending Discord resource: {e}")
+            return False
+    
+    async def _send_resource_async(self, channel_id, content, resource=None, file_path=None):
+        """Async method to send a resource message with optional resource or file"""
+        try:
+            # Get the channel
+            channel = self.client.get_channel(int(channel_id))
+            if not channel:
+                print(f"Channel {channel_id} not found")
+                return False
+    
+            message_content = content
+    
+            # If we have a resource with Cloudinary URL, add it to the message
+            if resource and resource.cloudinary_data.get("secure_url"):
+                message_content += f"\n{resource.cloudinary_data['secure_url']}"
+        
+                # Send message with URL
+                await channel.send(content=message_content)
+                return True
+    
+            # If we have a file path instead, send as attachment
+            elif file_path and Path(file_path).exists():
+                await channel.send(content=content, file=File(file_path))
+                return True
+            else:
+                # Just send the text message
+                await channel.send(content=content)
+                return True
+        
+        except Exception as e:
+            print(f"Error in _send_resource_async: {e}")
+            return False
     
     def send_direct_message(self, user_id, content, file_path=None):
         """Send a direct message to a Discord user
