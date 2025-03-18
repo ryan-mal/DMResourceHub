@@ -24,11 +24,11 @@ class FirebaseService:
         """Initialize Firebase connection"""
         if self.initialized:
             return
-        
+    
         try:
             # Load environment variables from .env file
             load_dotenv()
-            
+        
             # Check for credentials file
             cred_path = os.getenv("FIREBASE_CREDENTIALS_PATH")
             if not cred_path:
@@ -38,20 +38,29 @@ class FirebaseService:
                     cred_path = str(default_path)
                 else:
                     raise ValueError("Firebase credentials not found. Please set FIREBASE_CREDENTIALS_PATH in .env file.")
-            
+        
             # Initialize Firebase app
             cred = credentials.Certificate(cred_path)
-            self.app = firebase_admin.initialize_app(cred, {
-                'storageBucket': os.getenv("FIREBASE_STORAGE_BUCKET")
-            })
-            
-            # Initialize Firestore and Storage
+        
+            # Check if storage bucket is specified
+            storage_bucket = os.getenv("FIREBASE_STORAGE_BUCKET")
+            if storage_bucket:
+                self.app = firebase_admin.initialize_app(cred, {
+                    'storageBucket': storage_bucket
+                })
+                # Initialize Storage only if bucket is specified
+                self.bucket = storage.bucket()
+            else:
+                # Initialize without storage bucket
+                self.app = firebase_admin.initialize_app(cred)
+                self.bucket = None
+        
+            # Initialize Firestore
             self.db = firestore.client()
-            self.bucket = storage.bucket()
-            
+        
             self.initialized = True
             print("Firebase initialized successfully")
-            
+        
         except Exception as e:
             print(f"Error initializing Firebase: {e}")
             raise
@@ -294,52 +303,64 @@ class FirebaseService:
     
     def upload_file(self, file_path, destination_path):
         """Upload a file to Firebase Storage
-        
+    
         Args:
             file_path (str): Local file path
             destination_path (str): Path in Firebase Storage
-            
+        
         Returns:
             str: Public URL of the uploaded file, or None if failed
         """
         self._ensure_initialized()
-        
+    
+        # Check if storage bucket is available
+        if not self.bucket:
+            print("Firebase Storage not configured. Using Cloudinary instead.")
+            return None
+    
         try:
             blob = self.bucket.blob(destination_path)
             blob.upload_from_filename(file_path)
-            
+        
             # Make the file publicly accessible
             blob.make_public()
-            
+        
             # Return the public URL
             return blob.public_url
         except Exception as e:
             print(f"Error uploading file {file_path} to {destination_path}: {e}")
-        
+    
         return None
     
     def download_file(self, storage_path, destination_path):
         """Download a file from Firebase Storage
-        
+    
         Args:
             storage_path (str): Path in Firebase Storage
             destination_path (str): Local destination path
-            
+        
         Returns:
             bool: True if successful, False otherwise
         """
         self._ensure_initialized()
-        
+    
+        # Check if storage bucket is available
+        if not self.bucket:
+            print("Firebase Storage not configured. Using Cloudinary instead.")
+            return False
+    
         try:
             blob = self.bucket.blob(storage_path)
             blob.download_to_filename(destination_path)
             return True
         except Exception as e:
             print(f"Error downloading file from {storage_path} to {destination_path}: {e}")
-        
+    
         return False
     
     def _ensure_initialized(self):
         """Ensure that Firebase is initialized"""
         if not self.initialized:
             self.initialize()
+            
+
